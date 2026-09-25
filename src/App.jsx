@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
-import { supabase } from './supabase';
+import { hasSupabaseConfig, supabase } from './supabase';
 import AdminPage from './AdminPage';
 
 function Login({ onReady }) {
@@ -37,6 +37,7 @@ export default function App() {
   const [state, setState] = useState({ loading: true, session: null });
   useEffect(() => {
     let active = true;
+    if (!hasSupabaseConfig) { setState({ loading: false, session: null }); return () => { active = false; }; }
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       if (!data.session) { setState({ loading: false, session: null }); return; }
@@ -50,6 +51,11 @@ export default function App() {
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
+  if (!hasSupabaseConfig) return <main className="login-shell"><section className="login-card">
+    <div className="brand-mark"><ShieldCheck size={27} /></div>
+    <p className="eyebrow">Configuration needed</p><h1>Connect Supabase</h1>
+    <p className="login-copy">Create <code>.env.local</code> in the Admin Panel folder and set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, then restart the development server.</p>
+  </section></main>;
   if (state.loading) return <main className="splash"><div className="spinner" />Checking secure session…</main>;
   if (!state.session) return <Login onReady={(session) => setState({ loading: false, session })} />;
   return <AdminPage onSignOut={async () => { await supabase.auth.signOut(); setState({ loading: false, session: null }); }} />;
