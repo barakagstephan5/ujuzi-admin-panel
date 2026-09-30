@@ -7,6 +7,18 @@ export async function adminCall(functionName, body) {
     body,
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
-  if (error || data?.error) throw new Error(data?.error || error?.message || 'Request failed');
+  if (error) {
+    let message = data?.error;
+    // Supabase returns non-2xx JSON in FunctionsHttpError.context, not data.
+    // Keep the server's actionable explanation, including protected exams.
+    if (!message && typeof error.context?.clone === 'function') {
+      try {
+        const payload = await error.context.clone().json();
+        message = payload?.error || payload?.message;
+      } catch { /* Fall back to the SDK error below. */ }
+    }
+    throw new Error(message || error.message || 'Request failed');
+  }
+  if (data?.error) throw new Error(data.error);
   return data;
 }
