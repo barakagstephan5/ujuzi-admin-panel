@@ -37,7 +37,15 @@ export default function AssessmentsPanel({ reportError }) {
   useEffect(() => { load(); }, []);
   const open = async (item) => { setBusy(true); try { const v = await adminCall('admin-assessments', { action: tab === 'exams' ? 'exam_detail' : 'exercise_detail', id: item.id }); setEdit(v[tab === 'exams' ? 'exam' : 'exercise']); } catch (e) { reportError(e.message); } finally { setBusy(false); } };
   const save = async () => { setBusy(true); reportError(''); try { await adminCall('admin-assessments', { action: tab === 'exams' ? 'save_exam' : 'save_exercise', [tab === 'exams' ? 'exam' : 'exercise']: edit }); setEdit(null); await load(); } catch (e) { reportError(e.message); } finally { setBusy(false); } };
-  const remove = async (item) => { if (!confirm(`Delete “${item.title}” and its related content?`)) return; try { await adminCall('admin-assessments', { action: tab === 'exams' ? 'delete_exam' : 'delete_exercise', id: item.id }); await load(); } catch (e) { reportError(e.message); } };
+  const remove = async (item) => {
+    if (busy || !confirm(`Delete “${item.title}” and its related content? Exams with learner attempts cannot be deleted; unpublish those instead.`)) return;
+    setBusy(true); reportError('');
+    try {
+      await adminCall('admin-assessments', { action: tab === 'exams' ? 'delete_exam' : 'delete_exercise', id: item.id });
+      await load();
+    } catch (e) { reportError(e.message); }
+    finally { setBusy(false); }
+  };
   const togglePublished = async (item) => { setBusy(true); try { await adminCall('admin-assessments', { action: tab === 'exams' ? 'set_exam_published' : 'set_exercise_published', id: item.id, published: !item.is_published }); await load(); } catch (e) { reportError(e.message); } finally { setBusy(false); } };
 
   if (edit) {
