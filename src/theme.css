@@ -22,6 +22,9 @@
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] textarea,
 :root[data-theme="dark"] select { background: #101522 !important; border-color: #303a50 !important; color: #edf2f7 !important; }
+/* Form labels were slate-on-navy (about 2:1 contrast) in every admin form. */
+:root[data-theme="dark"] .compose label,
+:root[data-theme="dark"] .login-card label { color: #b4c0d3; }
 :root[data-theme="dark"] .segmented,
 :root[data-theme="dark"] .send-check,
 :root[data-theme="dark"] .question-edit,

@@ -9,15 +9,19 @@ export async function adminCall(functionName, body) {
   });
   if (error) {
     let message = data?.error;
+    let code = data?.code;
     // Supabase returns non-2xx JSON in FunctionsHttpError.context, not data.
     // Keep the server's actionable explanation, including protected exams.
     if (!message && typeof error.context?.clone === 'function') {
       try {
         const payload = await error.context.clone().json();
         message = payload?.error || payload?.message;
+        code = payload?.code;
       } catch { /* Fall back to the SDK error below. */ }
     }
-    throw new Error(message || error.message || 'Request failed');
+    // `code` lets a panel react to decisions the server asks for, such as
+    // confirming a package replacement or a payment still in progress.
+    throw Object.assign(new Error(message || error.message || 'Request failed'), { code: code ?? null });
   }
   if (data?.error) throw new Error(data.error);
   return data;
