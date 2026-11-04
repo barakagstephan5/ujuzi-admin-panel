@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { hasSupabaseConfig, supabase } from './supabase';
 import AdminPage from './AdminPage';
+import { CodeStep, needsCode } from './TwoStep';
 
-function Login({ onReady }) {
+function Login({ onReady, onNeedsCode }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -13,9 +14,11 @@ function Login({ onReady }) {
     event.preventDefault(); setBusy(true); setError('');
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (signInError) { setError(signInError.message); setBusy(false); return; }
+    // Admin rights can depend on the code, so it comes before the admin check.
+    if (await needsCode()) { onNeedsCode(); return; }
     const { data: allowed, error: adminError } = await supabase.rpc('is_admin');
     if (adminError || allowed !== true) {
-      await supabase.auth.signOut(); setError('This account is not an administrator.'); setBusy(false); return;
+      await supabase.auth.signOut(); setError('This account has no admin access. If it is an admin account, two-step sign-in may need setting up first: ask another admin.'); setBusy(false); return;
     }
     onReady(data.session);
   };
@@ -34,17 +37,22 @@ function Login({ onReady }) {
 }
 
 export default function App() {
-  const [state, setState] = useState({ loading: true, session: null });
+  const [state, setState] = useState({ loading: true, session: null, code: false });
+  const signOut = async () => { await supabase.auth.signOut(); setState({ loading: false, session: null, code: false }); };
+  const checkAdmin = async (stillWanted = () => true) => {
+    const [{ data: allowed }, { data }] = await Promise.all([supabase.rpc('is_admin'), supabase.auth.getSession()]);
+    if (!stillWanted()) return;
+    if (allowed === true) setState({ loading: false, session: data.session, code: false });
+    else await signOut();
+  };
   useEffect(() => {
     let active = true;
     if (!hasSupabaseConfig) { setState({ loading: false, session: null }); return () => { active = false; }; }
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       if (!data.session) { setState({ loading: false, session: null }); return; }
-      const { data: allowed } = await supabase.rpc('is_admin');
-      if (!active) return;
-      if (allowed === true) setState({ loading: false, session: data.session });
-      else { await supabase.auth.signOut(); setState({ loading: false, session: null }); }
+      if (await needsCode()) { if (active) setState({ loading: false, session: null, code: true }); return; }
+      await checkAdmin(() => active);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       if (!session && active) setState({ loading: false, session: null });
@@ -57,6 +65,7 @@ export default function App() {
     <p className="login-copy">Create <code>.env.local</code> in the Admin Panel folder and set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>, then restart the development server.</p>
   </section></main>;
   if (state.loading) return <main className="splash"><div className="spinner" />Checking secure session…</main>;
-  if (!state.session) return <Login onReady={(session) => setState({ loading: false, session })} />;
-  return <AdminPage onSignOut={async () => { await supabase.auth.signOut(); setState({ loading: false, session: null }); }} />;
+  if (state.code) return <CodeStep onDone={() => checkAdmin()} onCancel={signOut} />;
+  if (!state.session) return <Login onReady={(session) => setState({ loading: false, session, code: false })} onNeedsCode={() => setState({ loading: false, session: null, code: true })} />;
+  return <AdminPage onSignOut={signOut} />;
 }

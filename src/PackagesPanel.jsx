@@ -76,6 +76,16 @@ export default function PackagesPanel() {
     : typeof value === 'boolean' ? (value ? 'yes' : 'no')
     : ['price', 'referral_price'].includes(field) ? money(value) : String(value);
   const update = (key, value) => setEditor(p => ({ ...p, [key]: value }));
+  const savedOf = p => packages.find(row => row.id === p.id && p.revision);
+  // Paid published courses a package unlocks today, by the same rules the server uses.
+  const unlocked = p => courses.filter(c => c.is_published !== false && !c.is_free && (p.course_mode === 'all'
+    || (p.course_mode === 'legacy' ? p.id === 'premium' || c.access_tier !== 'premium' : (p.course_ids || []).includes(c.id))));
+  const courseChange = (before, after) => {
+    if (!before || (before.course_mode === after.course_mode && sameCourses(before.course_ids, after.course_ids))) return null;
+    const was = new Set(unlocked(before).map(c => c.id)), now = new Set(unlocked(after).map(c => c.id));
+    return { lost: unlocked(before).filter(c => !now.has(c.id)), gained: unlocked(after).filter(c => !was.has(c.id)) };
+  };
+  const titles = list => list.slice(0, 5).map(c => c.title).join(', ') + (list.length > 5 ? ` and ${list.length - 5} more` : '');
   const save = async (event) => {
     event.preventDefault();
     const price = Number(editor.price);
@@ -97,8 +107,14 @@ export default function PackagesPanel() {
     const saved = packages.find(p => p.id === editor.id && editor.revision);
     const members = saved?.active_members ?? 0;
     const warnings = [];
-    if (saved && members > 0 && (saved.course_mode !== editor.course_mode || !sameCourses(saved.course_ids, editor.course_ids))) {
-      warnings.push(`${plural(members, 'current member')} will gain or lose in-app course access as soon as you save.`);
+    const change = courseChange(saved, editor);
+    if (change) {
+      const who = members > 0 ? plural(members, 'current member') : 'Members';
+      if (change.lost.length) warnings.push(`COURSE ACCESS: ${who} will LOSE ${plural(change.lost.length, 'course')} as soon as you save: ${titles(change.lost)}.`);
+      if (change.gained.length) warnings.push(`COURSE ACCESS: ${who} will gain ${plural(change.gained.length, 'course')} as soon as you save: ${titles(change.gained)}.`);
+      if (!change.lost.length && !change.gained.length) warnings.push('Course access stays the same for current members today.');
+      if (editor.course_mode === 'all' && saved.course_mode !== 'all') warnings.push('Every course you publish later will also be included automatically.');
+      if (saved.course_mode === 'legacy') warnings.push('This package will stop following the Free/Business/Premium tier on each course, and that cannot be switched back. If you only meant to change the price, press Cancel and use “Undo course changes”.');
     }
     if (saved && members > 0 && saved.includes_member_tools !== editor.includes_member_tools) {
       warnings.push(`${plural(members, 'current member')} will ${editor.includes_member_tools ? 'gain' : 'lose'} member tools as soon as you save.`);
@@ -110,7 +126,7 @@ export default function PackagesPanel() {
       warnings.push('Business and Premium prices also appear on the landing page. Update them in Landing CMS after saving.');
     }
     if (!window.confirm([`Save ${editor.name} at ${money(price)}${referralPrice == null ? '' : ` (invited: ${money(referralPrice)})`} for ${duration} days?`,
-      ...warnings, 'Price and duration changes affect future purchases only.'].join('\n\n'))) return;
+      ...warnings, 'Price and duration changes apply to new purchases only. Members who already paid keep their price and end date.'].join('\n\n'))) return;
     await persist({ ...editor, access_tier: editor.id, price, referral_price: referralPrice, duration_days: duration, features: lines, sort_order: sortOrder, active: editor.archived ? false : editor.active });
   };
   const persist = async p => {
@@ -200,7 +216,14 @@ export default function PackagesPanel() {
         <summary>In-app course access (optional)</summary>
         <p className="hint">Only use this section if this package should also unlock uploaded courses. For a live-only package, leave the paid courses unchecked. Free courses remain available to everyone.</p>
         {editor.course_mode === 'legacy' && <p className="hint">This existing package keeps its original course rules (the Free/Business/Premium tier set on each course). Selecting a course below switches it to its own selection, and that cannot be switched back.</p>}
-        <label className="package-check"><input type="checkbox" checked={editor.course_mode === 'all'} onChange={e => setEditor(p => ({ ...p, course_mode: e.target.checked ? 'all' : 'selected', course_ids: e.target.checked ? [] : (p.course_ids || []) }))} />All published courses, including future courses</label>
+        {courseChange(savedOf(editor), editor) && <p className="hint package-warn">Course access differs from the saved package. Current members are affected as soon as you save. <button type="button" className="secondary" onClick={() => { const s = savedOf(editor); setEditor(p => ({ ...p, course_mode: s.course_mode, course_ids: s.course_ids || [] })); }}>Undo course changes</button></p>}
+        <label className="package-check"><input type="checkbox" checked={editor.course_mode === 'all'} onChange={e => {
+          // Unticking returns to what was saved rather than to an empty selection.
+          const s = savedOf(editor);
+          setEditor(p => e.target.checked ? { ...p, course_mode: 'all', course_ids: [] }
+            : s && s.course_mode !== 'all' ? { ...p, course_mode: s.course_mode, course_ids: s.course_ids || [] }
+            : { ...p, course_mode: 'selected', course_ids: p.course_ids || [] });
+        }} />All published courses, including future courses</label>
         {editor.course_mode !== 'all' && <div className="package-course-list">{courses.map(course => {
           const included = editor.course_mode === 'legacy' ? (editor.id === 'premium' || course.is_free || course.access_tier !== 'premium') : (editor.course_ids || []).includes(course.id);
           return <label className="package-check" key={course.id}><input type="checkbox" checked={course.is_free || included} disabled={course.is_free} onChange={e => {

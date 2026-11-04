@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart3, BookOpen, CheckCircle2, KeyRound, LogOut, Mail, Megaphone, MessageSquareText, Moon, RefreshCw, Send, ShieldCheck, Sun, Users, XCircle } from 'lucide-react';
+import { BarChart3, BookOpen, CheckCircle2, KeyRound, LogOut, Mail, Megaphone, MessageSquareText, Moon, RefreshCw, Send, ShieldCheck, Store, Sun, Users, XCircle } from 'lucide-react';
 import { adminCall } from './adminApi';
 import CourseManager from './CourseManager';
 import { AnalyticsPanel, NotificationsPanel, CommunityPanel } from './GeneralPanels';
@@ -9,6 +9,8 @@ import IdeasPanel from './IdeasPanel';
 import AccessPanel from './AccessPanel';
 import LandingCMS from './LandingCMS';
 import PackagesPanel from './PackagesPanel';
+import MarketplacePanel from './marketplace/MarketplacePanel';
+import { TwoStepPanel } from './TwoStep';
 import { confirmDiscard } from './unsavedChanges';
 
 function Metric({ icon: Icon, label, value, tone = '' }) {
@@ -65,12 +67,14 @@ export default function AdminPage({ onSignOut }) {
       <button className={tab === 'community' ? 'active' : ''} onClick={() => go('community')}><Users />Community</button>
       <button className={tab === 'access' ? 'active' : ''} onClick={() => go('access')}><KeyRound />Access</button>
       <button className={tab === 'packages' ? 'active' : ''} onClick={() => go('packages')}><KeyRound />Packages & pricing</button>
+      <button className={tab === 'marketplace' ? 'active' : ''} onClick={() => go('marketplace')}><Store />Marketplace</button>
       <button className={tab === 'shop' ? 'active' : ''} onClick={() => go('shop')}><BookOpen />Shop</button>
       <button className={tab === 'requests' ? 'active' : ''} onClick={() => go('requests')}><Users />Requests</button>
       <button className={tab === 'exams' ? 'active' : ''} onClick={() => go('exams')}><BookOpen />Exams</button>
       <button className={tab === 'ideas' ? 'active' : ''} onClick={() => go('ideas')}><Megaphone />Ideas</button>
       <button className={tab === 'campaigns' ? 'active' : ''} onClick={() => go('campaigns')}><Megaphone />Campaigns</button>
       <button className={tab === 'cms' ? 'active' : ''} onClick={() => go('cms')}><BookOpen />Landing CMS</button>
+      <button className={tab === 'security' ? 'active' : ''} onClick={() => go('security')}><ShieldCheck />Security</button>
     </nav>
     {error && <div className="alert error"><XCircle />{error}</div>}{loading && tab === 'overview' && <div className="loading">Loading admin data…</div>}
     {!loading && tab === 'overview' && <><section className="metrics"><Metric icon={Users} label="Registered users" value={metrics.users} /><Metric icon={CheckCircle2} label="Paid users" value={metrics.paidUsers} tone="green" /><Metric icon={BookOpen} label="Published courses" value={`${metrics.publishedCourses ?? 0}/${metrics.courses ?? 0}`} tone="blue" /><Metric icon={BarChart3} label="Enrollments" value={metrics.enrollments} tone="orange" /><Metric icon={Mail} label="Email audience" value={metrics.emailAudience} tone="violet" /><Metric icon={MessageSquareText} label="SMS audience" value={metrics.smsAudience} tone="teal" /></section><section className="card"><div className="card-head"><h2>Recent campaigns</h2><p>Only users who explicitly opted in are included.</p></div>{!overview?.campaigns?.length ? <div className="empty">No campaigns sent yet.</div> : <div className="history">{overview.campaigns.map((item) => <div className="history-row" key={item.id}><span className={`channel ${item.channel}`}>{item.channel === 'email' ? <Mail /> : <MessageSquareText />}</span><div><strong>{item.name}</strong><small>{new Date(item.created_at).toLocaleString()}</small></div><div className="counts"><strong>{item.sent_count}/{item.recipient_count}</strong><small>{item.status}</small></div></div>)}</div>}</section></>}
@@ -83,6 +87,8 @@ export default function AdminPage({ onSignOut }) {
     {tab === 'access' && <AccessPanel reportError={setError} />}
     {tab === 'packages' && <PackagesPanel />}
     {tab === 'cms' && <LandingCMS />}
+    {tab === 'security' && <TwoStepPanel />}
+    {tab === 'marketplace' && <MarketplacePanel />}
     {tab === 'shop' && <CommercePanel reportError={setError} />}
     {tab === 'requests' && <RequestsPanel reportError={setError} />}
     {tab === 'exams' && <AssessmentsPanel reportError={setError} />}
