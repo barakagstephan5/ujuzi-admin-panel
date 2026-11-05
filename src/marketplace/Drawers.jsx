@@ -38,11 +38,11 @@ function VideoPreview({ lesson }) {
 }
 
 // Approve, request changes, suspend or reinstate, by the item's state.
-function Decisions({ status, kindLabel, onDecide }) {
+function Decisions({ status, kindLabel, onDecide, approveMessage }) {
   const [dialog, setDialog] = useState(null);
   const open = (decision) => setDialog(decision);
   const config = {
-    approved: { title: `Approve this ${kindLabel}?`, message: 'It goes on sale straight away.', label: 'Approve' },
+    approved: { title: `Approve this ${kindLabel}?`, message: approveMessage || 'It goes on sale straight away.', label: 'Approve' },
     rejected: { title: 'Request changes', message: 'The instructor sees your note and can send it again.', label: 'Send note', reason: true, reasonLabel: 'What needs to change' },
     suspended: { title: `Suspend this ${kindLabel}?`, message: 'It comes off sale and buyers lose access until you reinstate it.', label: 'Suspend', reason: true, danger: true },
   };
@@ -59,9 +59,15 @@ function Decisions({ status, kindLabel, onDecide }) {
   </>;
 }
 
+const APP_URL = import.meta.env.VITE_LEARNER_APP_URL || 'https://app.ujuzikidigitali.com';
+
 export function CourseReview({ id, onClose, onChanged }) {
   const { data, error, reload } = useData(() => rpc('admin_course_review', { p_course: id }), [id]);
   const c = data?.course;
+  const owner = data?.instructor.user_id;
+  const selling = useData(() => (owner ? rpc('admin_instructor_selling', { p_user: owner }) : Promise.resolve(null)), [owner]);
+  // Their first free course: this one approval also unlocks selling.
+  const firstCourse = !!c?.is_free && c.review_status === 'pending' && selling.data?.since === null;
   const decide = async (decision, note) => {
     await rpc('admin_review_course', { p_course: id, p_decision: decision, p_note: note || null });
     await reload(); onChanged();
@@ -69,8 +75,11 @@ export function CourseReview({ id, onClose, onChanged }) {
   const questions = data ? data.lessons.reduce((n, l) => n + l.quizzes.reduce((m, q) => m + q.questions.length, 0), 0) : 0;
   return (
     <Drawer title={c?.title || 'Course'} subtitle={data ? `by ${data.instructor.display_name} · @${data.instructor.handle}` : ''} onClose={onClose}
-      footer={c && <div className="mkt-actions end"><Pill status={c.review_status} /><span className="mkt-grow" /><Decisions status={c.review_status} kindLabel="course" onDecide={decide} /></div>}>
+      footer={c && <div className="mkt-actions end"><Pill status={c.review_status} /><span className="mkt-grow" /><Decisions status={c.review_status} kindLabel="course" onDecide={decide}
+        approveMessage={firstCourse ? `It goes live and ${data.instructor.display_name} can start selling.` : (c.is_free ? 'It goes live straight away.' : undefined)} /></div>}>
       {error ? <div className="mkt-error">{error}</div> : !data ? <Skeleton rows={6} /> : <>
+        {firstCourse && <div className="mkt-note"><b>{data.instructor.display_name}'s first course.</b> Watch it in the app like a learner. Approving it puts it live and lets them start selling.</div>}
+        {c.review_status === 'pending' && <a className="mkt-btn primary" href={`${APP_URL}/course/${id}`} target="_blank" rel="noreferrer"><ExternalLink />Open in the app</a>}
         <div className="mkt-hero">
           {c.thumbnail_url ? <img src={c.thumbnail_url} alt="" /> : <div className="mkt-hero-empty"><Film /></div>}
           <div className="mkt-facts">
@@ -160,8 +169,7 @@ export function InstructorDrawer({ instructor: i, onClose, onChanged }) {
   const act = (fn) => async (note) => { await fn(note); onChanged(); };
   const review = (status) => act((note) => rpc('admin_review_instructor', { p_user: i.user_id, p_status: status, p_reason: note || null }));
   const dialogs = {
-    approve: { title: `Approve ${i.display_name}?`, message: 'They can create courses and products and sell once each is reviewed.', confirmLabel: 'Approve', onConfirm: review('approved') },
-    reject: { title: 'Decline this application?', confirmLabel: 'Decline', danger: true, reason: true, reasonLabel: 'Reason the applicant sees', onConfirm: review('rejected') },
+    approve: { title: `Reinstate ${i.display_name}?`, message: 'They can use the studio again. Their courses stay off sale until they list them again.', confirmLabel: 'Reinstate', onConfirm: review('approved') },
     suspend: { title: `Suspend ${i.display_name}?`, message: 'Everything they sell comes off sale. Buyers keep access.', confirmLabel: 'Suspend', danger: true, reason: true, onConfirm: review('suspended') },
     number: { title: `Approve ${phone(i.payout_phone)}?`, message: `Payouts will go to this number in the name of ${i.payout_name}. Check that it belongs to the instructor.`, confirmLabel: 'Approve number',
       onConfirm: act(() => rpc('admin_approve_payout_account', { p_user: i.user_id })) },
@@ -177,16 +185,15 @@ export function InstructorDrawer({ instructor: i, onClose, onChanged }) {
     <Drawer title={i.display_name} subtitle={`@${i.handle} · ${i.email || ''}`} onClose={onClose}
       footer={<div className="mkt-actions end">
         <Pill status={i.status} /><span className="mkt-grow" />
-        {i.status === 'pending' && <><button type="button" className="mkt-btn ghost" onClick={() => setDialog('reject')}>Decline</button>
-          <button type="button" className="mkt-btn primary" onClick={() => setDialog('approve')}><CheckCircle2 />Approve</button></>}
         {i.status === 'approved' && <button type="button" className="mkt-btn danger" onClick={() => setDialog('suspend')}>Suspend</button>}
-        {(i.status === 'suspended' || i.status === 'rejected') && <button type="button" className="mkt-btn primary" onClick={() => setDialog('approve')}>Approve</button>}
+        {i.status === 'suspended' && <button type="button" className="mkt-btn primary" onClick={() => setDialog('approve')}>Reinstate</button>}
       </div>}>
       <div className="mkt-profile">
         <Avatar name={i.display_name} url={i.avatar_url} size={64} />
-        <div><strong>{i.display_name}{verified && <BadgeCheck className="mkt-tick" />}</strong><span>Applied {day(i.applied_at)}{i.reviewed_at ? ` · reviewed ${day(i.reviewed_at)}` : ''}</span></div>
+        <div><strong>{i.display_name}{verified && <BadgeCheck className="mkt-tick" />}</strong><span>Joined {day(i.applied_at)}{i.selling_approved_at ? ` · can sell since ${day(i.selling_approved_at)}` : ' · cannot sell yet'}</span></div>
       </div>
       {i.status_reason && <div className="mkt-note"><b>Note:</b> {i.status_reason}</div>}
+      {!i.selling_approved_at && <div className="mkt-note">They can sell once you approve their free course. It appears under Review when they send it.</div>}
       <section className="mkt-section"><h3>About</h3><p className="mkt-prose">{i.bio || <span className="mkt-muted">No bio yet</span>}</p></section>
       <section className="mkt-section">
         <h3>Numbers</h3>

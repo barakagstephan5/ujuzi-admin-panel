@@ -62,7 +62,6 @@ function Overview({ summary, go }) {
   if (error) return <div className="mkt-error">{error} <button type="button" className="mkt-btn ghost sm" onClick={reload}>Try again</button></div>;
   if (!s) return <Skeleton rows={5} />;
   const todo = [
-    { n: s.instructors_pending, text: 'instructor applications', to: ['instructors', 'pending'] },
     { n: s.courses_pending, text: 'courses to review', to: ['review', 'course'] },
     { n: s.products_pending, text: 'products to review', to: ['review', 'product'] },
     { n: s.numbers_to_approve, text: 'payout numbers to approve', to: ['instructors', 'numbers'] },
@@ -101,17 +100,18 @@ function Instructors({ preset, onChanged }) {
   return <div className="mkt-card">
     <div className="mkt-toolbar">
       <Chips value={status} onChange={setStatus} options={[
-        { value: null, label: 'All' }, { value: 'pending', label: 'Applications' }, { value: 'approved', label: 'Approved' },
-        { value: 'numbers', label: 'Numbers to approve' }, { value: 'suspended', label: 'Suspended' }, { value: 'rejected', label: 'Declined' }]} />
+        { value: null, label: 'All' }, { value: 'approved', label: 'Approved' },
+        { value: 'numbers', label: 'Numbers to approve' }, { value: 'suspended', label: 'Suspended' }]} />
       <label className="mkt-search"><Search /><input type="search" placeholder="Name, handle or email" value={search} onChange={(e) => setSearch(e.target.value)} /></label>
     </div>
     {list.error ? <div className="mkt-error">{list.error}</div> : !list.data ? <Skeleton /> : rows.length === 0
-      ? <Empty icon={Users} text={status === 'pending' ? 'No applications waiting.' : 'No instructors here.'} />
+      ? <Empty icon={Users} text="No instructors here." />
       : rows.map(i => (
         <button key={i.user_id} type="button" className="mkt-row" onClick={() => setOpen(i.user_id)}>
           <Avatar name={i.display_name} url={i.avatar_url} />
           <span className="mkt-row-main"><strong>{i.display_name}</strong><small>@{i.handle} · {i.email}</small></span>
           <span className="mkt-row-meta">{i.courses_live} live · {i.sales} sales</span>
+          {!i.selling_approved_at && <Pill status="pending">Free course first</Pill>}
           {i.payout_phone && !i.payout_approved_at && <Pill status="pending">Number to approve</Pill>}
           <Pill status={i.status} /><ChevronRight />
         </button>
