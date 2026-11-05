@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  AlertTriangle, BookOpen, Box, CheckCircle2, ChevronRight, ClipboardList, HardDrive, Layers, Pause, Play, RefreshCw, Search, Settings2,
+  AlertTriangle, BadgeCheck, BookOpen, Box, CheckCircle2, ChevronRight, ClipboardList, HardDrive, Layers, Pause, Play, RefreshCw, Search, Settings2,
   ShoppingBag, Store, Users, Wallet,
 } from 'lucide-react';
 import { supabase } from '../supabase';
@@ -16,6 +16,7 @@ const SECTIONS = [
   { id: 'sales', label: 'Sales', icon: ShoppingBag },
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'storage', label: 'Storage', icon: HardDrive },
+  { id: 'tick', label: 'Blue tick', icon: BadgeCheck },
   { id: 'exams', label: 'Exams', icon: ClipboardList },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ];
@@ -27,7 +28,7 @@ export default function MarketplacePanel() {
   const s = summary.data || {};
   const badges = {
     instructors: s.instructors_pending, review: (s.courses_pending || 0) + (s.products_pending || 0),
-    payouts: (s.payouts_waiting || 0) + (s.numbers_to_approve || 0),
+    payouts: (s.payouts_waiting || 0) + (s.numbers_to_approve || 0), tick: s.verification_pending,
   };
   const go = (id, preset = null) => { setJump(preset); setSection(id); };
   const changed = () => summary.reload();
@@ -51,6 +52,7 @@ export default function MarketplacePanel() {
       {section === 'sales' && <Sales onChanged={changed} />}
       {section === 'payouts' && <Payouts preset={jump} paused={s.payouts_paused} onChanged={changed} />}
       {section === 'storage' && <Storage onChanged={changed} />}
+      {section === 'tick' && <BlueTick onChanged={changed} />}
       {section === 'exams' && <ExamsSection onChanged={changed} />}
       {section === 'settings' && <SettingsForm onChanged={changed} />}
     </section>
@@ -66,12 +68,14 @@ function Overview({ summary, go }) {
     { n: s.products_pending, text: 'products to review', to: ['review', 'product'] },
     { n: s.numbers_to_approve, text: 'payout numbers to approve', to: ['instructors', 'numbers'] },
     { n: s.payouts_waiting, text: 'payouts need you', to: ['payouts', 'attention'] },
+    { n: s.verification_pending, text: 'blue tick applications', to: ['tick', null] },
   ].filter(t => t.n > 0);
   return <>
     <div className="mkt-metrics">
       <div><span>Sales, 30 days</span><strong>{money(s.revenue_30d_tsh)}</strong><small>{s.sales_30d} sales</small></div>
       <div><span>Commission, 30 days</span><strong>{money(s.commission_30d_tsh)}</strong><small>Ujuzi's share</small></div>
       <div><span>Storage sold, 30 days</span><strong>{money(s.storage_30d_tsh)}</strong></div>
+      <div><span>Blue tick, 30 days</span><strong>{money(s.verification_30d_tsh)}</strong></div>
       <div><span>Owed to instructors</span><strong>{money(s.owed_tsh)}</strong><small>{money(s.paid_out_30d_tsh)} paid in 30 days</small></div>
       <div><span>Instructors</span><strong>{s.instructors_approved}</strong><small>approved</small></div>
       <div><span>Courses on sale</span><strong>{s.courses_live}</strong></div>
@@ -279,6 +283,60 @@ function Storage({ onChanged }) {
   </div>;
 }
 
+const TICK_LABEL = { pending: 'Waiting for you', approved: 'Approved', rejected: 'Not approved', removed: 'Removed' };
+function BlueTick({ onChanged }) {
+  const [dialog, setDialog] = useState(null);
+  const requests = useData(() => rpc('admin_verification_requests'));
+  const orders = useData(() => rpc('admin_verification_orders', { p_limit: 200 }));
+  const changed = () => { requests.reload(); orders.reload(); onChanged(); };
+  const decide = (i, decision, options) => setDialog({ ...options,
+    onConfirm: (note) => rpc('admin_review_verification', { p_user: i.user_id, p_decision: decision, p_note: note || null }).then(changed) });
+  return <>
+    <div className="mkt-card">
+      <h3>Applications</h3>
+      {requests.error ? <div className="mkt-error">{requests.error}</div> : !requests.data ? <Skeleton /> : requests.data.length === 0
+        ? <Empty icon={BadgeCheck} text="No applications yet. Instructors can apply once they have enough paid students." />
+        : requests.data.map(i => {
+          const active = i.verified_until && Date.parse(i.verified_until) > Date.now();
+          return (
+            <div key={i.user_id} className="mkt-row static">
+              <Avatar url={i.avatar_url} name={i.display_name} />
+              <span className="mkt-row-main"><strong>{i.display_name} · @{i.handle}</strong>
+                <small>{i.students} paid students · {TICK_LABEL[i.verification_status]}{active ? ` · tick until ${day(i.verified_until)}` : i.verification_status === 'approved' ? ' · not paid yet' : ''}</small>
+                {i.verification_note && <small className="mkt-warn">{i.verification_note}</small>}</span>
+              <a className="mkt-btn ghost sm" href={`${import.meta.env.VITE_LEARNER_APP_URL || 'https://app.ujuzikidigitali.com'}/i/${i.handle}`} target="_blank" rel="noreferrer">Open page</a>
+              {i.verification_status === 'pending' && <button type="button" className="mkt-btn ghost sm" onClick={() => decide(i, 'rejected', {
+                title: `Decline ${i.display_name}?`, danger: true, reason: true, confirmLabel: 'Decline', message: 'They see your reason and can apply again.' })}>Decline</button>}
+              {['pending', 'removed'].includes(i.verification_status) && <button type="button" className="mkt-btn primary sm" onClick={() => decide(i, 'approved', {
+                title: `Approve ${i.display_name}?`, confirmLabel: 'Approve', message: 'They can pay now. The blue tick appears once the payment arrives.' })}>Approve</button>}
+              {i.verification_status === 'approved' && <button type="button" className="mkt-btn ghost sm" onClick={() => decide(i, 'removed', {
+                title: `Remove the blue tick from ${i.display_name}?`, danger: true, reason: true, confirmLabel: 'Remove', message: 'It ends now and they cannot apply again on their own. Paid time is not returned unless you refund it below.' })}>Remove</button>}
+            </div>
+          );
+        })}
+    </div>
+    <div className="mkt-card">
+      <h3>Payments</h3>
+      {orders.error ? <div className="mkt-error">{orders.error}</div> : !orders.data ? <Skeleton /> : orders.data.length === 0 ? <Empty icon={Wallet} text="No blue tick payments yet." />
+        : orders.data.map(o => (
+          <div key={o.id} className="mkt-row static">
+            <span className="mkt-thumb"><BadgeCheck /></span>
+            <span className="mkt-row-main"><strong>{o.months} {o.months === 1 ? 'month' : 'months'} · {money(o.amount)}</strong>
+              <small>{o.instructor?.display_name} · {when(o.created_at)}{o.ends_at ? ` · until ${day(o.ends_at)}` : ''}</small>
+              {o.reconciliation_review_reason === 'paid_while_not_approved' && o.status === 'COMPLETED' && <small className="mkt-warn">Paid after the tick was removed. Refund this.</small>}
+              {o.refund_reason && <small className="mkt-warn">{o.refund_reason}</small>}</span>
+            <Pill status={o.status} />
+            {o.status === 'COMPLETED' && <button type="button" className="mkt-btn ghost sm" onClick={() => setDialog({
+              title: `Refund ${money(o.amount)}?`, danger: true, reason: true, confirmLabel: 'Mark refunded',
+              message: 'These months come off their blue tick now. Send the money back yourself in Snippe.',
+              onConfirm: (note) => rpc('admin_refund_verification_order', { p_order: o.id, p_reason: note }).then(changed) })}>Refund</button>}
+          </div>
+        ))}
+    </div>
+    {dialog && <Dialog {...dialog} onClose={() => setDialog(null)} />}
+  </>;
+}
+
 const GB = 1024 ** 3, MB = 1024 ** 2;
 const FIELDS = [
   { group: 'Money', items: [
@@ -290,6 +348,8 @@ const FIELDS = [
   { group: 'Storage', items: [
     ['free_storage_bytes', 'Free storage per instructor', 'GB', GB], ['storage_price_per_gb_tsh', 'Extra storage per GB a month', 'TSh', 1],
     ['max_video_bytes', 'Largest video', 'GB', GB], ['max_file_bytes', 'Largest other file', 'MB', MB]] },
+  { group: 'Blue tick', items: [
+    ['verification_price_tsh', 'Price per month (0 keeps payment closed)', 'TSh', 1], ['verification_min_students', 'Paid students needed to apply', 'students', 1]] },
 ];
 function SettingsForm({ onChanged }) {
   const current = useData(async () => {
