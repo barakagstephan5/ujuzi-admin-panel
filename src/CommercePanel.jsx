@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, Eye, EyeOff, FileDown, Plus, Save, Trash2 } from 'lucide-react';
 import { adminCall } from './adminApi';
-import { supabase } from './supabase';
+import { makeCover } from './coverImage';
 import MeetingsPanel from './MeetingsPanel';
 import './commerce.css';
 
@@ -14,12 +14,10 @@ const labels = { products: 'Products', services: 'Services', materials: 'Materia
 const fileBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
 const slug = (value) => String(value || 'cover').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'cover';
 
-async function uploadCover(file, folder, title) {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `${folder}/${Date.now()}_${slug(title)}.${ext}`;
-  const { error } = await supabase.storage.from('course-images').upload(path, file, { upsert: true, contentType: file.type || undefined });
-  if (error) throw error;
-  return supabase.storage.from('course-images').getPublicUrl(path).data.publicUrl;
+async function uploadCover(file) {
+  const cover = await makeCover(file);
+  const { url } = await adminCall('shop-upload', { type: 'cover', filename: file.name, content_type: cover.type, file_b64: await fileBase64(cover) });
+  return url;
 }
 
 export function CommercePanel({ reportError }) {
@@ -38,7 +36,7 @@ export function CommercePanel({ reportError }) {
         const uploaded = await adminCall('shop-upload', { type: tab === 'products' ? item.type : 'file', filename: item._file.name, file_b64: await fileBase64(item._file) });
         if (tab === 'products') item.storage_key = uploaded.key; else item.pdf_storage_key = uploaded.key;
       }
-      if (item._coverFile) item.cover_url = await uploadCover(item._coverFile, tab, item.title);
+      if (item._coverFile) item.cover_url = await uploadCover(item._coverFile);
       delete item._file; delete item._coverFile;
       if (tab === 'services' && typeof item.highlights === 'string') item.highlights = item.highlights.split('\n').map((x) => x.trim()).filter(Boolean);
       await adminCall('admin-commerce', { action: 'save', table: tab, item });
