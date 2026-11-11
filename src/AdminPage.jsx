@@ -10,6 +10,7 @@ import AccessPanel from './AccessPanel';
 import LandingCMS from './LandingCMS';
 import PackagesPanel from './PackagesPanel';
 import MarketplacePanel from './marketplace/MarketplacePanel';
+import CommunityChat from './CommunityChat';
 import { TwoStepPanel } from './TwoStep';
 import { confirmDiscard } from './unsavedChanges';
 
@@ -83,7 +84,7 @@ export default function AdminPage({ onSignOut }) {
     {tab === 'categories' && <CourseManager key="categories" categoriesOnly reportError={setError} />}
     {tab === 'analytics' && <AnalyticsPanel reportError={setError} />}
     {tab === 'notifications' && <NotificationsPanel reportError={setError} />}
-    {tab === 'community' && <CommunityPanel reportError={setError} />}
+    {tab === 'community' && <><CommunityChat /><CommunityPanel reportError={setError} /></>}
     {tab === 'access' && <AccessPanel reportError={setError} />}
     {tab === 'packages' && <PackagesPanel />}
     {tab === 'cms' && <LandingCMS />}
