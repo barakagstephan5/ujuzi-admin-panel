@@ -3,6 +3,7 @@ import { Download, Eye, EyeOff, FileDown, Plus, Save, Trash2 } from 'lucide-reac
 import { adminCall } from './adminApi';
 import { makeCover } from './coverImage';
 import MeetingsPanel from './MeetingsPanel';
+import ToolsPanel from './ToolsPanel';
 import './commerce.css';
 
 const blanks = {
@@ -10,7 +11,7 @@ const blanks = {
   services: { title: '', tagline: '', highlights: [], sort_order: 0, is_active: true },
   materials: { title: '', description: '', cover_url: '', pdf_storage_key: '', pdf_title: '', sort_order: 0, is_active: true },
 };
-const labels = { products: 'Products', services: 'Services', materials: 'Materials', meetings: 'Meetings & payouts' };
+const labels = { products: 'Products', services: 'Services', materials: 'Materials', tools: 'Tools', meetings: 'Meetings & payouts' };
 const fileBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
 const slug = (value) => String(value || 'cover').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'cover';
 
@@ -47,7 +48,7 @@ export function CommercePanel({ reportError }) {
   const toggle = async (item) => { try { await adminCall('admin-commerce', { action: 'save', table: tab, item: { ...item, is_active: !item.is_active } }); await load(); } catch (e) { reportError(e.message); } };
 
   return <><div className="subnav">{Object.keys(labels).map((key) => <button className={tab === key ? 'active' : ''} onClick={() => { setTab(key); setEdit(null); }} key={key}>{labels[key]}</button>)}</div>
-    {tab === 'meetings' ? <MeetingsPanel reportError={reportError} /> : edit ? <section className="card commerce-form"><h2>{edit.id ? 'Edit' : 'Add'} {labels[tab].slice(0, -1)}</h2>
+    {tab === 'meetings' ? <MeetingsPanel reportError={reportError} /> : tab === 'tools' ? <ToolsPanel reportError={reportError} /> : edit ? <section className="card commerce-form"><h2>{edit.id ? 'Edit' : 'Add'} {labels[tab].slice(0, -1)}</h2>
       <label>Title<input required value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></label>
       {tab !== 'services' && <label>Description<textarea rows="3" value={edit.description || ''} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></label>}
       {tab === 'products' && <><label>Type<select value={edit.type} onChange={(e) => setEdit({ ...edit, type: e.target.value })}><option value="ebook">E-book</option><option value="template">Template</option><option value="skills_md">Skills MD</option></select></label><label>Price (TZS)<input type="number" min="0" value={edit.price_tsh} onChange={(e) => setEdit({ ...edit, price_tsh: Number(e.target.value) })} /></label><label>Product file{!edit.id && ' (required)'}<input type="file" onChange={(e) => setEdit({ ...edit, _file: e.target.files[0] })} /></label>{edit.storage_key && <small>Stored: {edit.storage_key}</small>}<label className="inline-check"><input type="checkbox" checked={!!edit.is_special} onChange={(e) => setEdit({ ...edit, is_special: e.target.checked })} />Special referral-unlock product</label><label className="inline-check"><input type="checkbox" checked={!!edit.is_free} onChange={(e) => setEdit({ ...edit, is_free: e.target.checked })} />Free: everyone can download it in the web and mobile app</label></>}

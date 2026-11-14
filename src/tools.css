@@ -1,0 +1,58 @@
+/* Tools (Shop > Tools). Buttons are pills, per the design rules. */
+.tl { display: flex; flex-direction: column; gap: 16px; }
+.tl h2 { font-size: 1.15rem; }
+.tl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.tl-head p { margin-top: 4px; max-width: 620px; }
+.tl-muted { font-size: .82rem; color: #64748b; }
+.tl-spacer { flex: 1; }
+.tl-btn {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 15px; border-radius: 999px;
+  border: 1px solid #d7e0e9; background: #fff; color: #1a3a5c; font-weight: 700; font-size: .84rem; cursor: pointer; white-space: nowrap;
+}
+.tl-btn svg { width: 16px; height: 16px; }
+.tl-btn.primary { background: #1a3a5c; border-color: #1a3a5c; color: #fff; }
+.tl-btn.danger { color: #be123c; border-color: #fecdd3; }
+.tl-btn:disabled, .tl-round:disabled { opacity: .45; cursor: default; }
+.tl-round { width: 36px; height: 36px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: transparent; color: #64748b; }
+.tl-round svg { width: 17px; height: 17px; }
+.tl-round:hover:not(:disabled) { background: #f1f5f9; }
+.tl-round.danger { color: #be123c; }
+.tl-icon {
+  width: 44px; height: 44px; flex: none; border-radius: 14px; background: #eaf1f8; color: #1a3a5c;
+  display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.tl-icon img { width: 100%; height: 100%; object-fit: cover; }
+.tl-item { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-top: 1px solid #eef2f6; }
+.tl-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; margin-left: 6px; }
+.tl-item-main small { font-size: .78rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-field { display: flex; flex-direction: column; gap: 7px; font-size: .82rem; font-weight: 700; color: #475569; }
+.tl-field input { width: 100%; padding: 11px 13px; border: 1px solid #d7e0e9; border-radius: 12px; background: #fff; font-weight: 500; color: #172033; outline: none; }
+.tl-field input:focus { border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43, 108, 176, .1); }
+.tl-two { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+.tl-icons { display: flex; flex-wrap: wrap; gap: 8px; }
+.tl-icons button { width: 44px; height: 44px; border-radius: 14px; border: 1px solid #d7e0e9; background: #fff; color: #475569; display: inline-flex; align-items: center; justify-content: center; }
+.tl-icons button.active { border-color: #1a3a5c; background: #eaf1f8; color: #1a3a5c; box-shadow: 0 0 0 2px #1a3a5c inset; }
+.tl-row-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tl-check { display: flex; align-items: center; gap: 10px; font-size: .86rem; font-weight: 600; color: #334155; }
+.tl-check input { width: 18px; height: 18px; accent-color: #1a3a5c; }
+.tl-error { padding: 10px 12px; border-radius: 12px; background: #fff1f2; color: #be123c; font-size: .86rem; font-weight: 600; }
+.tl-actions { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 720px) {
+  .tl-two { grid-template-columns: 1fr; }
+  .tl-item { flex-wrap: wrap; }
+  .tl-item-main { flex-basis: calc(100% - 60px); }
+}
+
+:root[data-theme="dark"] .tl-muted, :root[data-theme="dark"] .tl-item-main small { color: #94a3b8; }
+:root[data-theme="dark"] .tl-field, :root[data-theme="dark"] .tl-check { color: #b4c0d3; }
+:root[data-theme="dark"] .tl-btn { background: #1d2434; border-color: #303a50; color: #d9e2ee; }
+:root[data-theme="dark"] .tl-btn.primary { background: #d9a441; border-color: #d9a441; color: #111827; }
+:root[data-theme="dark"] .tl-btn.danger, :root[data-theme="dark"] .tl-round.danger { color: #fda4af; }
+:root[data-theme="dark"] .tl-round { color: #94a3b8; }
+:root[data-theme="dark"] .tl-round:hover:not(:disabled) { background: #1d2434; }
+:root[data-theme="dark"] .tl-icon { background: #1d2434; color: #93c5fd; }
+:root[data-theme="dark"] .tl-icons button { background: #101522; border-color: #303a50; color: #b4c0d3; }
+:root[data-theme="dark"] .tl-icons button.active { background: #13213d; border-color: #93c5fd; color: #93c5fd; box-shadow: 0 0 0 2px #93c5fd inset; }
+:root[data-theme="dark"] .tl-item { border-color: #283044; }
+:root[data-theme="dark"] .tl-error { background: #3b1219; color: #fda4af; }
