@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, BookOpen, Check, Copy, Download, ExternalLink, Mic, Plus, RefreshCw, Save, Square, Trash2, Upload, Users, X } from 'lucide-react';
 import { supabase } from './supabase';
 import { adminCall } from './adminApi';
-import { confirmDiscard, registerUnsaved } from './unsavedChanges';
+import { registerUnsaved } from './unsavedChanges';
+import { useConfirm } from './confirmDialog';
 import {
   QUIZ_SITE, audioType, blankQuestion, blankQuiz, contactsCsv, eatTime, filterContacts, localPhone, quizForSave,
   quizLink, quizProblems, recorderType, resultCell, slugify,
@@ -237,6 +238,7 @@ function QuizEditor({ initial, onSaved, onClose }) {
   const [slugTouched, setSlugTouched] = useState(Boolean(initial));
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState([]);
+  const [confirmBox, ask] = useConfirm();
   const startJson = useRef(JSON.stringify(start));
   const latest = useRef(quiz);
   latest.current = quiz;
@@ -272,7 +274,7 @@ function QuizEditor({ initial, onSaved, onClose }) {
     }
   };
   const remove = async () => {
-    if (!window.confirm(`Delete "${quiz.title}"? This cannot be undone.`)) return;
+    if (!(await ask(`Delete "${quiz.title}"?`, { action: 'Delete', danger: true, detail: 'This cannot be undone.' }))) return;
     setBusy(true);
     try {
       await rpc('admin_free_quiz_delete', { p_quiz: quiz.id });
@@ -280,10 +282,16 @@ function QuizEditor({ initial, onSaved, onClose }) {
       onSaved(null);
     } catch (e) { setProblems([e.message]); } finally { setBusy(false); }
   };
-  const close = () => { if (confirmDiscard()) { startJson.current = JSON.stringify(latest.current); onClose(); } };
+  const close = async () => {
+    const changed = JSON.stringify(latest.current) !== startJson.current;
+    if (changed && !(await ask('Discard your changes to this quiz?', { action: 'Discard', danger: true }))) return;
+    startJson.current = JSON.stringify(latest.current);
+    onClose();
+  };
 
   return (
     <section className="card fq">
+      {confirmBox}
       <div className="fq-head">
         <div><h2>{quiz.id ? 'Edit quiz' : 'New quiz'}</h2><p className="fq-muted">Learners open it at {quiz.featured ? QUIZ_SITE.replace('https://', '') : `${QUIZ_SITE.replace('https://', '')}/?q=${quiz.slug || 'link-name'}`}</p></div>
         <button type="button" className="fq-icon" onClick={close} aria-label="Close"><X /></button>
@@ -307,7 +315,7 @@ function QuizEditor({ initial, onSaved, onClose }) {
       {quiz.questions.map((q, i) => (
         <QuestionEditor key={q.id || `new-${i}`} q={q} index={i} count={quiz.questions.length} stats={initial?.stats}
           onChange={(v) => setQuestion(i, v)} onMove={(by) => move(i, by)}
-          onRemove={() => { if (window.confirm(`Remove question ${i + 1}?`)) setQuiz((x) => ({ ...x, questions: x.questions.filter((_, k) => k !== i) })); }} />
+          onRemove={async () => { if (await ask(`Remove question ${i + 1}?`, { action: 'Remove', danger: true })) setQuiz((x) => ({ ...x, questions: x.questions.filter((_, k) => k !== i) })); }} />
       ))}
       <button type="button" className="fq-btn" onClick={() => setQuiz((q) => ({ ...q, questions: [...q.questions, blankQuestion()] }))}><Plus />Add question</button>
 
@@ -343,6 +351,7 @@ function Contacts({ reportError }) {
   const [quizId, setQuizId] = useState('');
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmBox, ask] = useConfirm();
   const load = async () => {
     setBusy(true);
     try { setData(await rpc('admin_free_quiz_contacts')); } catch (e) { reportError(e.message); } finally { setBusy(false); }
@@ -363,12 +372,13 @@ function Contacts({ reportError }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const removeContact = async (c) => {
-    if (!window.confirm(`Remove ${c.name} (${localPhone(c.phone)}) and their scores? Use this when someone asks to stop getting SMS.`)) return;
+    if (!(await ask(`Remove ${c.name} (${localPhone(c.phone)}) and their scores?`, { action: 'Remove', danger: true, detail: 'Use this when someone asks to stop getting SMS.' }))) return;
     try { await rpc('admin_free_quiz_contact_delete', { p_contact: c.id }); await load(); } catch (e) { reportError(e.message); }
   };
 
   return (
     <section className="card fq">
+      {confirmBox}
       <div className="fq-head">
         <div><h2>Contacts</h2><p className="fq-muted">Everyone who joined a quiz and agreed to SMS. Upload the CSV straight to the SMS company's portal: opening and saving it in Excel can turn long numbers into 2.56E+11.</p></div>
         <button type="button" className="fq-icon" onClick={load} aria-label="Refresh"><RefreshCw /></button>

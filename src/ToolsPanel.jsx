@@ -6,6 +6,7 @@ import {
 import { supabase } from './supabase';
 import { adminCall } from './adminApi';
 import { makeCover } from './coverImage';
+import { useConfirm } from './confirmDialog';
 import './tools.css';
 
 // Tools in the app's Library (Library > Tools): the owner's web apps, opened
@@ -109,6 +110,7 @@ export default function ToolsPanel({ reportError }) {
   const [tools, setTools] = useState(null);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [confirmBox, ask] = useConfirm();
 
   const load = async () => {
     try { setTools(await rpc('admin_app_tools')); } catch (e) { reportError(e.message); }
@@ -125,8 +127,8 @@ export default function ToolsPanel({ reportError }) {
     setTools(await rpc('admin_app_tools_order', { p_ids: ids }));
   });
   const toggle = (t) => act(async () => { await rpc('admin_app_tool_save', { p_tool: { ...t, is_active: !t.is_active } }); await load(); });
-  const remove = (t) => {
-    if (!window.confirm(`Delete "${t.name}"? It disappears from the app.`)) return;
+  const remove = async (t) => {
+    if (!(await ask(`Delete "${t.name}"?`, { action: 'Delete', danger: true, detail: 'It disappears from the app for everyone.' }))) return;
     act(async () => { await rpc('admin_app_tool_delete', { p_tool: t.id }); await load(); });
   };
 
@@ -135,6 +137,7 @@ export default function ToolsPanel({ reportError }) {
   }
   return (
     <section className="card tl">
+      {confirmBox}
       <div className="tl-head">
         <div><h2>Tools</h2><p className="tl-muted">Your web apps in the app's Library &gt; Tools. They open inside the app, and learners must be signed in. Changes show in the app within about a minute.</p></div>
         <button type="button" className="tl-btn primary" onClick={() => setEditing('new')}><Plus />Add a tool</button>
