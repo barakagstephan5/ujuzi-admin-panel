@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart3, BookOpen, CheckCircle2, Gamepad2, KeyRound, LogOut, Mail, Megaphone, MessageSquareText, Moon, RefreshCw, Send, ShieldCheck, Store, Sun, Users, XCircle } from 'lucide-react';
+import { BarChart3, BookOpen, CheckCircle2, Gamepad2, KeyRound, LogOut, Mail, Megaphone, MessageSquareText, Moon, RefreshCw, Send, ShieldCheck, Smartphone, Store, Sun, Users, XCircle } from 'lucide-react';
 import { adminCall } from './adminApi';
 import CourseManager from './CourseManager';
 import { AnalyticsPanel, NotificationsPanel, CommunityPanel } from './GeneralPanels';
@@ -13,6 +13,7 @@ import MarketplacePanel from './marketplace/MarketplacePanel';
 import CommunityChat from './CommunityChat';
 import FreeQuizPanel from './FreeQuizPanel';
 import { TwoStepPanel } from './TwoStep';
+import AppUpdatesPanel from './AppUpdatesPanel';
 import { confirmDiscard } from './unsavedChanges';
 
 function Metric({ icon: Icon, label, value, tone = '' }) {
@@ -122,6 +123,7 @@ export default function AdminPage({ onSignOut }) {
       <button className={tab === 'ideas' ? 'active' : ''} onClick={() => go('ideas')}><Megaphone />Ideas</button>
       <button className={tab === 'campaigns' ? 'active' : ''} onClick={() => go('campaigns')}><Megaphone />Campaigns</button>
       <button className={tab === 'cms' ? 'active' : ''} onClick={() => go('cms')}><BookOpen />Landing CMS</button>
+      <button className={tab === 'appupdates' ? 'active' : ''} onClick={() => go('appupdates')}><Smartphone />App updates</button>
       <button className={tab === 'security' ? 'active' : ''} onClick={() => go('security')}><ShieldCheck />Security</button>
     </nav>
     {error && <div className="alert error"><XCircle />{error}</div>}{loading && tab === 'overview' && <div className="loading">Loading admin data…</div>}
@@ -136,6 +138,7 @@ export default function AdminPage({ onSignOut }) {
     {tab === 'packages' && <PackagesPanel />}
     {tab === 'cms' && <LandingCMS />}
     {tab === 'security' && <TwoStepPanel />}
+    {tab === 'appupdates' && <AppUpdatesPanel reportError={setError} />}
     {tab === 'marketplace' && <MarketplacePanel />}
     {tab === 'shop' && <CommercePanel reportError={setError} />}
     {tab === 'requests' && <RequestsPanel reportError={setError} />}

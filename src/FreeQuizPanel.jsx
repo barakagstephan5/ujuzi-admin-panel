@@ -44,8 +44,8 @@ function CopyText({ text, label }) {
   return <button type="button" className="fq-btn" onClick={copy}>{done ? <Check /> : <Copy />}{done ? 'Copied' : label}</button>;
 }
 
-/** Record in the browser or upload a file; shows a player once there is a clip. */
-function VoiceField({ label, value, onChange }) {
+/** Record in the browser or upload a file; shows a player once there is a clip. Course quizzes use it too. */
+export function VoiceField({ label, value, onChange }) {
   const [mode, setMode] = useState('idle');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
