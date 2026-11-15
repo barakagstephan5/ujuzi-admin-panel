@@ -205,11 +205,11 @@ function QuestionEditor({ q, index, count, stats, onChange, onMove, onRemove }) 
       </div>
       <div className="fq-two">
         <div>
-          <label className="fq-field">When right: short explanation<textarea rows="2" maxLength={500} value={q.explain_right} onChange={(e) => set('explain_right', e.target.value)} /></label>
+          <label className="fq-field">When right: short explanation (optional)<textarea rows="2" maxLength={500} value={q.explain_right} onChange={(e) => set('explain_right', e.target.value)} /></label>
           <VoiceField label="Voice: correct, and why" value={q.audio_right} onChange={(v) => set('audio_right', v)} />
         </div>
         <div>
-          <label className="fq-field">When wrong: short explanation<textarea rows="2" maxLength={500} value={q.explain_wrong} onChange={(e) => set('explain_wrong', e.target.value)} /></label>
+          <label className="fq-field">When wrong: short explanation (optional)<textarea rows="2" maxLength={500} value={q.explain_wrong} onChange={(e) => set('explain_wrong', e.target.value)} /></label>
           <VoiceField label="Voice: not correct, and the right answer" value={q.audio_wrong} onChange={(v) => set('audio_wrong', v)} />
         </div>
       </div>

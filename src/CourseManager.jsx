@@ -13,11 +13,11 @@ function QuestionVoice({ question, onChange }) {
       <VoiceField label="Voice reading the question" value={question.audio_question || ''} onChange={(v) => onChange('audio_question', v)} />
       <div className="fq-two">
         <div>
-          <label className="fq-field">When right: short explanation<textarea rows="2" maxLength={500} value={question.explain_right || ''} onChange={(e) => onChange('explain_right', e.target.value)} /></label>
+          <label className="fq-field">When right: short explanation (optional)<textarea rows="2" maxLength={500} value={question.explain_right || ''} onChange={(e) => onChange('explain_right', e.target.value)} /></label>
           <VoiceField label="Voice: correct, and why" value={question.audio_right || ''} onChange={(v) => onChange('audio_right', v)} />
         </div>
         <div>
-          <label className="fq-field">When wrong: short explanation<textarea rows="2" maxLength={500} value={question.explain_wrong || ''} onChange={(e) => onChange('explain_wrong', e.target.value)} /></label>
+          <label className="fq-field">When wrong: short explanation (optional)<textarea rows="2" maxLength={500} value={question.explain_wrong || ''} onChange={(e) => onChange('explain_wrong', e.target.value)} /></label>
           <VoiceField label="Voice: not correct, and the right answer" value={question.audio_wrong || ''} onChange={(v) => onChange('audio_wrong', v)} />
         </div>
       </div>
