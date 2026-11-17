@@ -239,6 +239,9 @@ function QuizEditor({ initial, onSaved, onClose }) {
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState([]);
   const [confirmBox, ask] = useConfirm();
+  // 'both' offers the e-book download and the link together.
+  const hasBook = quiz.finish_kind === 'ebook' || quiz.finish_kind === 'both';
+  const hasLink = quiz.finish_kind === 'link' || quiz.finish_kind === 'both';
   const startJson = useRef(JSON.stringify(start));
   const latest = useRef(quiz);
   latest.current = quiz;
@@ -321,17 +324,17 @@ function QuizEditor({ initial, onSaved, onClose }) {
 
       <h3 className="fq-section">At the end</h3>
       <div className="fq-seg wide">
-        {[['none', 'Score only'], ['ebook', 'E-book download'], ['link', 'Link (for example sign up)']].map(([key, label]) => (
+        {[['none', 'Score only'], ['ebook', 'E-book download'], ['link', 'Link (for example sign up)'], ['both', 'E-book and link']].map(([key, label]) => (
           <button type="button" key={key} className={quiz.finish_kind === key ? 'active' : ''} onClick={() => set('finish_kind', key)}>{label}</button>
         ))}
       </div>
       <div className="fq-two">
         <label className="fq-field">Heading<input value={quiz.finish_title} maxLength={120} placeholder={quiz.finish_kind === 'link' ? 'Hatua inayofuata' : 'Zawadi yako: E-book'} onChange={(e) => set('finish_title', e.target.value)} /></label>
-        {quiz.finish_kind === 'ebook' && <label className="fq-field">Download name<input value={quiz.ebook_name} maxLength={120} placeholder="Mwongozo wa Ujuzi Kidigitali" onChange={(e) => set('ebook_name', e.target.value)} /></label>}
-        {quiz.finish_kind === 'link' && <label className="fq-field">Button text<input value={quiz.link_label} maxLength={60} placeholder="Jisajili upate kitabu bure" onChange={(e) => set('link_label', e.target.value)} /></label>}
+        {hasBook && <label className="fq-field">Download name<input value={quiz.ebook_name} maxLength={120} placeholder="Mwongozo wa Ujuzi Kidigitali" onChange={(e) => set('ebook_name', e.target.value)} /></label>}
+        {hasLink && <label className="fq-field">Button text<input value={quiz.link_label} maxLength={60} placeholder="Jisajili upate kitabu bure" onChange={(e) => set('link_label', e.target.value)} /></label>}
       </div>
-      {quiz.finish_kind === 'ebook' && <EbookField url={quiz.ebook_url} onChange={(v) => set('ebook_url', v)} />}
-      {quiz.finish_kind === 'link' && <label className="fq-field">Link<input value={quiz.link_url} maxLength={500} placeholder="https://app.ujuzikidigitali.com/..." onChange={(e) => set('link_url', e.target.value)} /></label>}
+      {hasBook && <EbookField url={quiz.ebook_url} onChange={(v) => set('ebook_url', v)} />}
+      {hasLink && <label className="fq-field">Link<input value={quiz.link_url} maxLength={500} placeholder="https://app.ujuzikidigitali.com/..." onChange={(e) => set('link_url', e.target.value)} /></label>}
       <label className="fq-field">Message<textarea rows="2" maxLength={600} value={quiz.finish_text} placeholder="Kesho tutaendelea na somo la pili." onChange={(e) => set('finish_text', e.target.value)} /></label>
       <VoiceField label="Voice at the end (optional)" value={quiz.finish_audio} onChange={(v) => set('finish_audio', v)} />
 
