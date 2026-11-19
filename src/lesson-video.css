@@ -1,0 +1,54 @@
+/* A lesson's video in the course editor: a link, or an upload straight to R2. */
+.lv { display: grid; gap: 10px; }
+.lv-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lv-label { font-size: .82rem; font-weight: 700; }
+.lv-switch { display: inline-flex; padding: 3px; border-radius: 999px; background: #eef4f8; }
+.lv-switch button { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 0; border-radius: 999px;
+  background: transparent; color: #52606d; font-weight: 600; font-size: .82rem; cursor: pointer; }
+.lv-switch button.on { background: #fff; color: #1a3a5c; box-shadow: 0 1px 2px rgba(15, 30, 46, .08); }
+.lv-switch button:disabled { cursor: not-allowed; opacity: .6; }
+.lv-switch svg, .lv-actions svg, .lv-drop svg { width: 16px; height: 16px; }
+.lv-note { margin: 0; font-size: 13px; color: #52606d; }
+
+.lv-drop { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px; border: 1.5px dashed #c4d2df; border-radius: 14px; background: #fff; }
+.lv-drop small { flex-basis: 100%; color: #52606d; font-size: 13px; }
+.lv-pick { width: auto; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 9px 16px; }
+
+.lv-file, .lv-list li { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #d9e2ec; border-radius: 14px; background: #fff; }
+.lv-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #eef4f8; color: #1a3a5c; }
+.lv-icon svg { width: 20px; height: 20px; }
+.lv-meta { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.lv-meta strong { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-meta small { color: #52606d; font-size: 13px; }
+.lv-warn { color: #b54708 !important; }
+.lv-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lv-actions .secondary, .lv-actions .primary, .lv-actions .danger-link { border-radius: 999px; }
+.lv-actions .primary { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; }
+
+.lv-job { display: grid; gap: 8px; padding: 14px; border: 1px solid #d9e2ec; border-radius: 14px; background: #fff; }
+.lv-job-top { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; }
+.lv-job-top strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-job-top span { flex: none; color: #52606d; font-variant-numeric: tabular-nums; }
+.lv-job small { color: #52606d; font-size: 13px; font-variant-numeric: tabular-nums; }
+.lv-bar { height: 6px; border-radius: 999px; background: #eef4f8; overflow: hidden; }
+.lv-bar i { display: block; height: 100%; border-radius: inherit; background: #1a3a5c; transition: width .25s ease; }
+.lv-job.paused .lv-bar i { background: #9aa9b8; }
+.lv-job.waiting .lv-bar i { width: 0 !important; }
+.lv-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fff1f0; color: #b42318; font-size: 13px; }
+
+.lv-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(15, 30, 46, .45); }
+.lv-sheet { width: min(560px, 100%); max-height: min(80vh, 720px); overflow: auto; padding: 18px; border-radius: 18px; background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 30, 46, .2); }
+.lv-sheet.wide { width: min(900px, 100%); }
+.lv-sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.lv-sheet-head h3 { margin: 0; font-size: 1.05rem; }
+.lv-player { display: block; width: 100%; max-height: 70vh; border-radius: 12px; background: #000; }
+.lv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lv-list li.current { border-color: #1a3a5c; }
+.lv-chip { padding: 6px 12px; border-radius: 999px; background: #e6f6ee; color: #17804e; font-size: .8rem; font-weight: 600; }
+.lv-empty { margin: 8px 0; color: #52606d; }
+.lv-skeleton { display: grid; gap: 8px; }
+.lv-skeleton span { height: 64px; border-radius: 14px; background: #eef4f8; animation: lv-pulse 1.4s ease-in-out infinite; }
+@keyframes lv-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .lv-bar i, .lv-skeleton span { transition: none; animation: none; } }
+@media (max-width: 680px) { .lv-file { flex-wrap: wrap; } .lv-file .lv-actions { flex-basis: 100%; } }
