@@ -57,12 +57,12 @@ const contacts = [
 
 test('the CSV has names, 255 numbers, East Africa time and each quiz result', () => {
   const csv = contactsCsv(contacts, quizzes);
-  assert.ok(csv.startsWith('﻿'));
-  const lines = csv.slice(1).trimEnd().split('\r\n');
+  assert.ok(csv.startsWith('Phone,Name,'), 'no byte order mark: the SMS portal must see the Name header');
+  const lines = csv.trimEnd().split('\r\n');
   assert.deepEqual(lines, [
-    'Name,Phone,Joined (EAT),Siku 1,"Siku 2, ""kesho"""',
-    'Neema Juma,255712345678,2026-11-16 10:05,4/5,started',
-    `"'=HYPERLINK(""x"")",255765000111,2026-11-16 10:06,,`,
+    'Phone,Name,Joined (EAT),Siku 1,"Siku 2, ""kesho"""',
+    '255712345678,Neema,2026-11-16 10:05,4/5,started',
+    `255765000111,"'=HYPERLINK(""x"")",2026-11-16 10:06,,`,
   ]);
   assert.equal(eatTime('2026-11-16T22:30:00Z'), '2026-11-17 01:30');
   assert.equal(resultCell(undefined), '');
@@ -75,4 +75,29 @@ test('contacts filter by quiz and by name or number, written either way', () => 
   assert.equal(filterContacts(contacts, '', '0712 345').length, 1);
   assert.equal(filterContacts(contacts, '', '255765').length, 1);
   assert.equal(filterContacts(contacts, '', '').length, 2);
+});
+
+test('numbers collected this week and these two weeks count from Monday, East Africa time', async () => {
+  const { collectedStats, weekStartEat, eatDay } = await import('../src/freeQuiz.js');
+  // Wednesday 19 November 2026, 10:00 EAT.
+  const now = new Date('2026-11-19T07:00:00Z');
+  assert.equal(weekStartEat(now).toISOString(), '2026-11-15T21:00:00.000Z', 'Monday 16 Nov 00:00 EAT');
+  assert.equal(weekStartEat(new Date('2026-11-15T21:30:00Z')).toISOString(), '2026-11-15T21:00:00.000Z', 'Monday 00:30 EAT is this week');
+  assert.equal(weekStartEat(new Date('2026-11-15T20:30:00Z')).toISOString(), '2026-11-08T21:00:00.000Z', 'Sunday 23:30 EAT is last week');
+  const at = (iso) => ({ joined_at: iso });
+  const list = [at('2026-11-19T06:00:00Z'), at('2026-11-15T21:00:00Z'), at('2026-11-15T20:59:00Z'), at('2026-11-08T21:00:00Z'), at('2026-11-01T10:00:00Z')];
+  const s = collectedStats(list, now);
+  assert.deepEqual([s.thisWeek, s.twoWeeks, s.all], [2, 4, 5]);
+  assert.equal(eatDay(s.week), 'Mon 16 Nov');
+  assert.equal(eatDay(s.twoWeeksFrom), 'Mon 9 Nov');
+});
+
+test('download last N keeps the newest N, and a blank keeps everyone', async () => {
+  const { newestContacts } = await import('../src/freeQuiz.js');
+  const list = [{ joined_at: '2026-11-10T00:00:00Z', id: 'old' }, { joined_at: '2026-11-18T00:00:00Z', id: 'new' }, { joined_at: '2026-11-14T00:00:00Z', id: 'mid' }];
+  assert.deepEqual(newestContacts(list, 2).map((c) => c.id), ['new', 'mid']);
+  assert.deepEqual(newestContacts(list, '40').map((c) => c.id), ['new', 'mid', 'old'], 'asking for more than there are gives everyone');
+  assert.equal(newestContacts(list, '').length, 3);
+  assert.equal(newestContacts(list, 0).length, 3);
+  assert.equal(newestContacts(list, -3).length, 3);
 });

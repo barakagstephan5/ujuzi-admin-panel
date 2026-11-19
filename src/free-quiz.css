@@ -106,3 +106,20 @@
 :root[data-theme="dark"] .fq-status.closed { background: #2a1a0c; color: #fdba74; }
 :root[data-theme="dark"] .fq-status.live { background: #13213d; color: #93c5fd; }
 :root[data-theme="dark"] .fq-rec { color: #fda4af; }
+
+/* Numbers collected: this week, two weeks, all. */
+.fq-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fq-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 14px; }
+.fq-stats span { font-size: .78rem; font-weight: 700; color: #64748b; }
+.fq-stats strong { font-size: 1.6rem; font-weight: 800; color: #1a3a5c; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.fq-stats small { font-size: .74rem; color: #94a3b8; }
+@media (max-width: 520px) { .fq-stats { gap: 8px; } .fq-stats > div { padding: 10px; } .fq-stats strong { font-size: 1.3rem; } }
+
+/* Download only the newest N numbers. */
+.fq-last { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 700; color: #475569; }
+.fq-last input { width: 76px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; font-weight: 600; }
+:root[data-theme="dark"] .fq-stats > div { border-color: #283044; background: #101522; }
+:root[data-theme="dark"] .fq-stats span, :root[data-theme="dark"] .fq-last { color: #b4c0d3; }
+:root[data-theme="dark"] .fq-stats strong { color: #f7fafc; }
+:root[data-theme="dark"] .fq-stats small { color: #7c8aa3; }
+:root[data-theme="dark"] .fq-last input { background: #101522; border-color: #303a50; color: #f7fafc; }

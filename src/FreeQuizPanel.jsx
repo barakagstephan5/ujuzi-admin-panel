@@ -5,7 +5,8 @@ import { adminCall } from './adminApi';
 import { registerUnsaved } from './unsavedChanges';
 import { useConfirm } from './confirmDialog';
 import {
-  QUIZ_SITE, audioType, blankQuestion, blankQuiz, contactsCsv, eatTime, filterContacts, localPhone, quizForSave,
+  QUIZ_SITE, audioType, blankQuestion, blankQuiz, collectedStats, contactsCsv, eatDay, eatTime, filterContacts, localPhone,
+  newestContacts, quizForSave,
   quizLink, quizProblems, recorderType, resultCell, slugify,
 } from './freeQuiz';
 import './free-quiz.css';
@@ -360,17 +361,21 @@ function Contacts({ reportError }) {
     try { setData(await rpc('admin_free_quiz_contacts')); } catch (e) { reportError(e.message); } finally { setBusy(false); }
   };
   useEffect(() => { load(); }, []);
+  const [last, setLast] = useState('');
   const shown = useMemo(() => (data ? filterContacts(data.contacts, quizId, search) : []), [data, quizId, search]);
+  const stats = useMemo(() => (data ? collectedStats(data.contacts) : null), [data]);
   const quizzes = data?.quizzes || [];
   const columns = quizId ? quizzes.filter((q) => q.id === quizId) : quizzes;
+  const lastN = Math.floor(Number(last)) > 0 ? Math.floor(Number(last)) : 0;
+  const toDownload = useMemo(() => newestContacts(shown, lastN), [shown, lastN]);
 
   const download = () => {
-    const csv = contactsCsv(shown, columns);
+    const csv = contactsCsv(toDownload, columns);
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     const quiz = quizzes.find((q) => q.id === quizId);
     a.href = url;
-    a.download = `ujuzi-quiz-${quiz ? quiz.slug : 'contacts'}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `ujuzi-quiz-${quiz ? quiz.slug : 'contacts'}${lastN ? `-last-${toDownload.length}` : ''}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -386,6 +391,13 @@ function Contacts({ reportError }) {
         <div><h2>Contacts</h2><p className="fq-muted">Everyone who joined a quiz and agreed to SMS. Upload the CSV straight to the SMS company's portal: opening and saving it in Excel can turn long numbers into 2.56E+11.</p></div>
         <button type="button" className="fq-icon" onClick={load} aria-label="Refresh"><RefreshCw /></button>
       </div>
+      {stats && (
+        <div className="fq-stats">
+          <div><span>This week</span><strong>{stats.thisWeek}</strong><small>since {eatDay(stats.week)}</small></div>
+          <div><span>Two weeks</span><strong>{stats.twoWeeks}</strong><small>since {eatDay(stats.twoWeeksFrom)}</small></div>
+          <div><span>All numbers</span><strong>{stats.all}</strong><small>since the start</small></div>
+        </div>
+      )}
       <div className="fq-filters">
         <select value={quizId} onChange={(e) => setQuizId(e.target.value)}>
           <option value="">Every quiz</option>
@@ -396,8 +408,15 @@ function Contacts({ reportError }) {
       <div className="fq-actions">
         <strong>{shown.length} {shown.length === 1 ? 'person' : 'people'}</strong>
         <span className="fq-spacer" />
-        <CopyText text={shown.map((c) => c.phone).join('\n')} label="Copy numbers" />
-        <button type="button" className="fq-btn primary-pill" disabled={!shown.length} onClick={download}><Download />Download CSV</button>
+        <CopyText text={toDownload.map((c) => c.phone).join('\n')} label="Copy numbers" />
+        <label className="fq-last">
+          Last
+          <input type="number" min="1" step="1" inputMode="numeric" placeholder="All" value={last}
+            aria-label="How many of the newest numbers to download" onChange={(e) => setLast(e.target.value.replace(/[^0-9]/g, ''))} />
+        </label>
+        <button type="button" className="fq-btn primary-pill" disabled={!toDownload.length} onClick={download}>
+          <Download />{lastN ? `Download last ${toDownload.length}` : 'Download CSV'}
+        </button>
       </div>
       {busy && !data ? <div className="loading">Loading contacts…</div> : !shown.length ? <div className="empty">Nobody yet.</div> : (
         <div className="fq-table-wrap">

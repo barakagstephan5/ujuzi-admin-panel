@@ -105,15 +105,19 @@ const csvCell = (value) => {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
+/** One name only (owner, 19 November 2026): the first word of a saved name. */
+export const firstName = (name) => String(name ?? '').trim().split(/\s+/)[0];
+
 /**
- * The contacts as CSV for the SMS company's portal: Name, Phone in 255 form,
- * when they joined (EAT), and their result in each quiz. The byte order mark
- * keeps Swahili names readable in Excel.
+ * The contacts as CSV for the SMS company's portal: Phone in 255 form, first Name,
+ * when they joined (EAT), and their result in each quiz. Phone and Name come
+ * first, in the portal's own order. No byte order mark: the portal read it as
+ * part of the first header, so "Name" was not found and every name was blank.
  */
 export function contactsCsv(contacts, quizzes) {
-  const header = ['Name', 'Phone', 'Joined (EAT)', ...quizzes.map((q) => q.title)];
-  const rows = contacts.map((c) => [c.name, c.phone, eatTime(c.joined_at), ...quizzes.map((q) => resultCell(c.results?.[q.id]))]);
-  return '﻿' + [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const header = ['Phone', 'Name', 'Joined (EAT)', ...quizzes.map((q) => q.title)];
+  const rows = contacts.map((c) => [c.phone, firstName(c.name), eatTime(c.joined_at), ...quizzes.map((q) => resultCell(c.results?.[q.id]))]);
+  return [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
 /** Contacts filtered by quiz ('' = everyone) and by a search on name or number. */
@@ -128,4 +132,38 @@ export function filterContacts(contacts, quizId, search) {
     const local = '0' + c.phone.slice(3);
     return c.phone.includes(digits) || local.includes(digits);
   });
+}
+
+const DAY = 86400000;
+const EAT_OFFSET = 3 * 3600000; // East Africa Time is UTC+3 all year.
+
+/** Monday 00:00 East Africa time of the week holding `now`, as a Date. */
+export function weekStartEat(now = new Date()) {
+  const local = new Date(now.getTime() + EAT_OFFSET);
+  const sinceMonday = (local.getUTCDay() + 6) % 7;
+  const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - sinceMonday * DAY;
+  return new Date(midnight - EAT_OFFSET);
+}
+
+/**
+ * New numbers collected: this week (from Monday, East Africa time), these two
+ * weeks (from last week's Monday) and all of them.
+ */
+export function collectedStats(contacts, now = new Date()) {
+  const week = weekStartEat(now);
+  const twoWeeks = new Date(week.getTime() - 7 * DAY);
+  const since = (from) => contacts.filter((c) => new Date(c.joined_at) >= from).length;
+  return { thisWeek: since(week), twoWeeks: since(twoWeeks), all: contacts.length, week, twoWeeksFrom: twoWeeks };
+}
+
+/** "Mon 16 Nov" in East Africa time. */
+export function eatDay(date) {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Dar_es_Salaam', weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+}
+
+/** The newest `count` contacts (by when they joined); a blank or 0 count keeps everyone. */
+export function newestContacts(contacts, count) {
+  const n = Math.floor(Number(count));
+  if (!(n > 0)) return contacts;
+  return [...contacts].sort((a, b) => String(b.joined_at).localeCompare(String(a.joined_at))).slice(0, n);
 }
