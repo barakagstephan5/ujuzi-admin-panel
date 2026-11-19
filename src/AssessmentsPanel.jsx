@@ -21,7 +21,7 @@ function Reviews({ items, kind, reload, reportError }) {
     const message = note[item.id] || item.reviewer_note || (status === 'approved' ? `Your ${kind} was approved.` : `Your ${kind} needs changes. Please review the feedback in the app.`);
     try {
       await adminCall('admin-assessments', { action: 'review', kind, id: item.id, status, note: message });
-      if (status !== 'pending') try { await adminCall('send-push-notification', { user_id: item.user_id, title: status === 'approved' ? `${kind === 'project' ? 'Project' : 'Assignment'} approved 🎉` : `${kind === 'project' ? 'Project' : 'Assignment'} needs changes`, message }); } catch (notificationError) { reportError(`Review saved, but learner notification failed: ${notificationError.message}`); }
+      if (status !== 'pending') try { await adminCall('send-push-notification', { user_id: item.user_id, title: status === 'approved' ? `${kind === 'project' ? 'Project' : 'Assignment'} approved` : `${kind === 'project' ? 'Project' : 'Assignment'} needs changes`, message }); } catch (notificationError) { reportError(`Review saved, but learner notification failed: ${notificationError.message}`); }
       await reload();
     } catch (e) { reportError(e.message); } finally { setBusy(''); }
   };

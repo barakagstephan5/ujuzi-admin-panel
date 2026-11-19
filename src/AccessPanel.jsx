@@ -284,9 +284,9 @@ export default function AccessPanel({ reportError }) {
       {user && !identityMatches && <div className="alert error">The email field no longer matches the loaded learner. Find the account again before granting.</div>}
       {user && <div className="send-check">
         <strong>{user.full_name || 'Registered learner'} · {user.email}</strong>
-        <p>{user.verified ? 'Email verified' : 'Email not verified — ask the learner to verify it first.'}
+        <p>{user.verified ? 'Email verified' : 'Email not verified. Ask the learner to verify it first.'}
           {' · '}Current package: {active ? currentName : 'Free'}{user.lifetime ? ' (lifetime)' : user.expires_at && active ? ` (expires ${day(user.expires_at)})` : ''}</p>
-        {user.referred && <p>Referral code linked — use the referred price below.</p>}
+        {user.referred && <p>Referral code linked: use the referred price below.</p>}
         {user.recent_payments?.length > 0 && <div className="access-payments">
           <strong>Recent payments</strong>
           {user.recent_payments.map(p => <p key={p.id}>{when(p.created_at)} · {p.package_name || packageName(p.subscription_tier)} · {money(p.amount)} · {String(p.status).toLowerCase()}{p.access_expires_at ? ` · applied until ${day(p.access_expires_at)}` : ''}{p.reconciliation_review_reason === 'completed_not_applied' && !p.access_applied_at ? ' · received, not applied' : ''} · {p.payment_method || ''}</p>)}
@@ -317,7 +317,7 @@ export default function AccessPanel({ reportError }) {
       {identityMatches && user?.verified && !user.lifetime && !held.length && <>
         <label>Access plan
           <select value={plan} onChange={(e) => { setPlan(e.target.value); setConfirmed(false); setConfirmReplace(false); }}>
-            {packages.map(p => <option key={p.id} value={p.id}>{p.name} — {money(user?.referred ? p.referral_price ?? p.price : p.price)} · {p.duration_days} days</option>)}
+            {packages.map(p => <option key={p.id} value={p.id}>{p.name} · {money(user?.referred ? p.referral_price ?? p.price : p.price)} · {p.duration_days} days</option>)}
           </select>
         </label>
         {renewing && <p className="hint">Renewal: {selectedPackage.duration_days} days are added after the current expiry ({day(user.expires_at)}), so no remaining days are lost.</p>}
