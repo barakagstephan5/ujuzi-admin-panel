@@ -1,0 +1,46 @@
+/* Group access (Access tab). Buttons here are pills, per the design rules. */
+.group-grant { margin-top: 18px; }
+.group-grant select { width: 100%; padding: 12px 13px; border: 1px solid #d7e0e9; border-radius: 12px; background: #fff; }
+.gg-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 15px; }
+.gg-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.gg-pill { border-radius: 999px !important; }
+.group-grant .primary.gg-pill { align-self: flex-start; padding: 12px 22px; }
+
+.gg-result { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.gg-summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.gg-chip { padding: 6px 12px; border-radius: 999px; font-size: .8rem; font-weight: 750; background: #eef2f6; color: #475569; }
+.gg-result > .gg-pill { align-self: flex-start; }
+.gg-chip.ok { background: #ecfdf5; color: #047857; }
+.gg-chip.warn { background: #fff7ed; color: #9a3412; }
+
+.gg-group { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; }
+.gg-group summary { cursor: pointer; font-weight: 650; font-size: .86rem; }
+.gg-group summary b { margin-left: 4px; color: #047857; }
+.gg-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.gg-group-head small { display: block; font-size: .76rem; color: #64748b; margin-top: 3px; }
+.gg-group.open { border-color: #fed7aa; background: #fffaf3; }
+.gg-list { margin: 10px 0 0; padding-left: 18px; columns: 2 240px; font-size: .84rem; overflow-wrap: anywhere; }
+.gg-emails { margin-top: 8px; font-size: .8rem; color: #64748b; overflow-wrap: anywhere; }
+
+.gg-batch { border-top: 1px solid #eef2f6; padding: 12px 0; }
+.gg-batch > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
+.gg-batch > summary::-webkit-details-marker { display: none; }
+.gg-batch > summary small { display: block; font-size: .75rem; color: #64748b; }
+.gg-counts { font-size: .8rem; font-weight: 700; color: #1a3a5c; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .gg-row { grid-template-columns: 1fr; }
+  .gg-group-head { flex-direction: column; }
+}
+
+:root[data-theme="dark"] .group-grant select { background: #101522; border-color: #303a50; color: #edf2f7; }
+:root[data-theme="dark"] .gg-group { border-color: #283044; }
+:root[data-theme="dark"] .gg-group.open { border-color: #6b4a1f; background: #1f1a12; }
+:root[data-theme="dark"] .gg-group-head small,
+:root[data-theme="dark"] .gg-emails,
+:root[data-theme="dark"] .gg-batch > summary small { color: #9aa7bb; }
+:root[data-theme="dark"] .gg-chip { background: #1d2434; color: #b4c0d3; }
+:root[data-theme="dark"] .gg-chip.ok { background: #0f2f25; color: #6ee7b7; }
+:root[data-theme="dark"] .gg-chip.warn { background: #2f2010; color: #fdba74; }
+:root[data-theme="dark"] .gg-batch { border-color: #283044; }
+:root[data-theme="dark"] .gg-counts { color: #d9e2ee; }

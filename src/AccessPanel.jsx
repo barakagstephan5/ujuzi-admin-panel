@@ -4,6 +4,7 @@ import { adminCall } from './adminApi';
 import { supabase } from './supabase';
 import { createRequestGuard, sameEmail } from './requestGuard';
 import OldPaymentCheck from './OldPaymentCheck';
+import GroupGrant from './GroupGrant.jsx';
 
 const money = (amount) => amount == null ? '—' : `TSh ${Number(amount).toLocaleString('en-TZ')}`;
 const day = (value) => value ? new Date(value).toLocaleDateString() : '';
@@ -335,6 +336,7 @@ export default function AccessPanel({ reportError }) {
       </>}
       {result && <div className="alert success"><CheckCircle2 />{result.email} has {result.package_name || result.plan} {result.renewed ? 'renewed' : 'access'} {result.expires_at ? `until ${new Date(result.expires_at).toLocaleString()}` : 'for life'}.</div>}
     </section>
+    <GroupGrant reportError={reportError} />
     <section className="card">
       <div className="card-head row"><div><h2>Payments needing review</h2><p>Payments the system could not settle on its own, money received first. Check them with the provider, then apply or record how each was resolved.</p></div>
         <button type="button" className="icon-btn" aria-label="Refresh payments needing review" onClick={() => loadReview()}><RefreshCw /></button>

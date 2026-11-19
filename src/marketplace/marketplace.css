@@ -51,6 +51,7 @@ button.mkt-row:hover { background: var(--m-canvas); }
 .mkt-row-main { display: grid; gap: 2px; }
 .mkt-row-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mkt-row-main small, .mkt-tr small { color: var(--m-muted); font-size: .76rem; overflow-wrap: anywhere; }
+.mkt-audio { width: min(100%, 320px); height: 36px; margin-top: 4px; }
 .mkt .mkt-row-meta { flex: none !important; color: var(--m-muted); font-size: .78rem; white-space: nowrap; }
 .mkt-count { min-width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--m-brand-soft); color: var(--m-brand); }
 :root[data-theme="dark"] .mkt-count { color: var(--m-accent); }

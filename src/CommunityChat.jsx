@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Flag, MessageCircle, ShieldCheck, Star, UserX } from 'lucide-react';
 import { Dialog, Empty, Skeleton, rpc, useData, when } from './marketplace/parts';
+import CommunityTimetables from './CommunityTimetables.jsx';
 import './marketplace/marketplace.css';
 
 const ACCESS = { everyone: 'Everyone', package: 'Package members', members: 'People you add' };
@@ -35,7 +36,10 @@ export default function CommunityChat() {
               <strong>{r.kind === 'poll' ? `Poll: ${r.body}` : r.body || 'Photo'}</strong>
               <small>{r.name} ({r.email}) in {d.groups.find(g => g.id === r.group)?.name ?? r.group} · {when(r.at)} · {r.count} {r.count === 1 ? 'report' : 'reports'}</small>
               {r.reasons?.length > 0 && <small className="mkt-warn">{[...new Set(r.reasons)].join(', ')}</small>}
-              {r.image && <a href={r.image} target="_blank" rel="noreferrer"><small>Open photo</small></a>}
+              {/* A reported voice note plays here, so it can be judged before deciding. */}
+              {r.image && (r.kind === 'voice'
+                ? <audio className="mkt-audio" controls preload="none" src={r.image} aria-label="Reported voice note" />
+                : <a href={r.image} target="_blank" rel="noreferrer"><small>{r.kind === 'file' ? 'Open document' : 'Open photo'}</small></a>)}
             </span>
             <button type="button" className="mkt-btn ghost sm" onClick={() => run(() => rpc('admin_community_resolve', { p_message: r.message_id, p_delete: false }))}>Keep</button>
             <button type="button" className="mkt-btn ghost sm" onClick={() => setDialog({
@@ -56,6 +60,8 @@ export default function CommunityChat() {
         <h3>Groups</h3>
         {d.groups.map(g => <GroupRow key={g.id} group={g} onSave={(patch) => run(() => rpc('admin_community_save_group', { p_group: { id: g.id, ...patch } }))} />)}
       </div>
+
+      <CommunityTimetables />
 
       {special && (
         <PeopleCard icon={Star} title={`${special.name} members`} empty="Nobody added yet." people={special.members ?? []}

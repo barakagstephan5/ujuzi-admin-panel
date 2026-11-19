@@ -1,0 +1,35 @@
+/* Timetables (Community page). Buttons are pills, per the design rules. */
+.tt { margin-top: 16px; }
+.tt-pill { border-radius: 999px !important; }
+.tt .mkt-chips { margin: 6px 0 4px; }
+.tt-meta { margin-top: 4px; }
+
+.tt-group { border: 1px solid var(--m-line); border-radius: 16px; padding: 14px; margin-top: 12px; display: grid; gap: 10px; }
+.tt-group-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tt-badge { width: 54px; height: 54px; border-radius: 14px; background: var(--m-brand-soft); color: var(--m-brand); display: grid; place-items: center; font-size: 1.9rem; font-weight: 800; line-height: 1; position: relative; padding-top: 8px; }
+.tt-badge small { position: absolute; top: 5px; left: 7px; font-size: .55rem; font-weight: 700; letter-spacing: .03em; color: var(--m-muted); }
+.tt-count { color: var(--m-muted); font-size: .8rem; flex: 1; }
+
+.tt-lesson { display: grid; grid-template-columns: 130px 140px 100px minmax(160px, 1fr) auto auto; gap: 10px; align-items: end; padding: 10px 0; border-top: 1px solid var(--m-line); }
+.tt-lesson label { display: grid; gap: 5px; font-size: .75rem; font-weight: 700; color: var(--m-muted); }
+.tt-lesson input, .tt-lesson select { width: 100%; height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--m-line); background: var(--m-canvas); color: var(--m-ink); font: inherit; font-weight: 500; }
+.tt-lesson input:focus, .tt-lesson select:focus { outline: none; border-color: var(--m-accent); }
+.tt-range { font-size: .78rem; color: var(--m-muted); white-space: nowrap; padding-bottom: 10px; }
+.tt-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 999px; background: transparent; color: var(--m-muted); border: 1px solid var(--m-line); }
+.tt-icon:hover { color: var(--m-bad); border-color: var(--m-bad); }
+.tt-group > .mkt-btn { justify-self: start; }
+
+.tt-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.tt-spacer { flex: 1; }
+.tt-saved { color: var(--m-ok); font-size: .85rem; font-weight: 600; margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .tt-lesson { grid-template-columns: 1fr 1fr 1fr; }
+  .tt-topic { grid-column: 1 / -1; }
+  .tt-range { grid-column: 1 / 3; padding-bottom: 0; align-self: center; }
+}
+
+/* 24-hour start time: two small dropdowns, hour and minutes. */
+.tt-time { display: flex; align-items: center; gap: 4px; }
+.tt-time select { padding: 0 6px; }
+.tt-time b { color: var(--m-muted); }
